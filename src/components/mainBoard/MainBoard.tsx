@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import s from "./MainBoard.module.css";
 import { getKittyPhoto, CatImage } from "../../api/KittensApi";
 import CardContainer from "../card/CardContainer";
+import loadingImage from "../../assets/loading.svg"
 
 interface MainBoardProps {
     likedImages: string[];
@@ -24,11 +25,13 @@ const MainBoard: React.FC<MainBoardProps> = ({
                                                  removeFromLiked,
                                              }) => {
     const pageRef = useRef(1);
+    const [isLoading, setIsLoading] = useState(false);
 
     const [filteredImages, setFilteredImages] = useState<{ id: number; url: string; name: string; origin: string }[]>([]);
 
     const getImages = async () => {
         try {
+            setIsLoading(true);
             const data: CatImage[] = await getKittyPhoto(pageRef.current);
 
             setImages(data.map((catImage) => ({
@@ -41,6 +44,8 @@ const MainBoard: React.FC<MainBoardProps> = ({
             pageRef.current++;
         } catch (error) {
             console.error("Error loading images:", error);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -61,7 +66,11 @@ const MainBoard: React.FC<MainBoardProps> = ({
                 </button>
             </div>
             <div className={s.container}>
-                {filteredImages.map(({ id, url, name, origin }, index) => (
+                {isLoading ? (
+                    <div className={s.loaderContainer}>
+                        <img src={loadingImage} alt="Loading" className={s.loaderImage} />
+                    </div>
+                ) : (filteredImages.map(({ id, url, name, origin }, index) => (
                     <CardContainer
                         key={`${id}-${index}`}
                         imageUrl={url}
@@ -72,7 +81,8 @@ const MainBoard: React.FC<MainBoardProps> = ({
                         name={name}
                         origin={origin}
                     />
-                ))}
+                    ))
+                )}
             </div>
         </div>
     );

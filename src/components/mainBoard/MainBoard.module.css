@@ -31,3 +31,15 @@
 .filterButton:hover {
     background-color: plum;
 }
+.loaderContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 50vh;
+}
+
+.loaderImage {
+    width: 200px;
+    height: 200px;
+}
