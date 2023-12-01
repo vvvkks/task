@@ -1,4 +1,4 @@
-import React, { FC } from "react";
+import React, {FC, useCallback} from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart as solidHeart, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { faHeart as regularHeart } from "@fortawesome/free-regular-svg-icons";
@@ -15,17 +15,17 @@ export interface CardProps {
 }
 
 const Card: FC<CardProps> = ({ imageUrl, isLiked, name, origin, addToLiked, removeFromLiked, removeFromImagesAndLiked}) => {
-    const handleLikeClick = () => {
+    const handleLikeClick = useCallback(() => {
         if (isLiked) {
             removeFromLiked(imageUrl);
         } else {
             addToLiked(imageUrl);
         }
-    };
+    }, [isLiked, imageUrl, addToLiked, removeFromLiked]);
 
-    const handleRemoveClick = () => {
+    const handleRemoveClick = useCallback(() => {
         removeFromImagesAndLiked(imageUrl);
-    };
+    }, [imageUrl, removeFromImagesAndLiked]);
 
     return (
         <div className={styles.wrapper}>
