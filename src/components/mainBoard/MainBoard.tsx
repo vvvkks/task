@@ -1,86 +1,63 @@
-import React, { useEffect, useRef, useState } from "react";
-import s from "./MainBoard.module.css";
-import { getKittyPhoto, CatImage } from "../../api/KittensApi";
-import CardContainer from "../card/CardContainer";
-import loadingImage from "../../assets/loading.svg"
+import React, {useCallback, useEffect, useRef} from 'react';
+import s from './MainBoard.module.css';
+import loadingImage from '../../assets/loading.svg';
+import Card from '../card/Card';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+    addToLiked,
+    removeFromImagesAndLiked,
+    removeFromLiked,
+    setFilterMode,
+    fetchImages,
+    selectImagesState,
+} from '../../redux/imagesSlice';
+import {ImageType} from "../../redux/imagesSlice";
 
-interface MainBoardProps {
-    likedImages: string[];
-    showLikedOnly: boolean;
-    images: { id: number; url: string; name: string; origin: string }[];
-    setFilterMode: (showLikedOnly: boolean) => void;
-    setImages: (images: { id: number; url: string; name: string; origin: string }[]) => void;
-    addToLiked: (imageUrl: string) => void;
-    removeFromLiked: (imageUrl: string) => void;
-    removeFromImagesAndLiked: (imageUrl: string) => void;
-}
-
-const MainBoard: React.FC<MainBoardProps> = ({
-                                                 likedImages,
-                                                 showLikedOnly,
-                                                 images,
-                                                 setFilterMode,
-                                                 setImages,
-                                                 addToLiked,
-                                                 removeFromLiked,
-                                             }) => {
+const MainBoard: React.FC = () => {
+    const dispatch = useDispatch();
+    const { loading, showLikedOnly, images, likedImages } = useSelector(selectImagesState);
     const pageRef = useRef(1);
-    const [isLoading, setIsLoading] = useState(false);
 
-    const [filteredImages, setFilteredImages] = useState<{ id: number; url: string; name: string; origin: string }[]>([]);
+    const filteredImages = showLikedOnly
+        ? likedImages.map((url: string) => images.find((img: ImageType) => img.url === url))
+        : images;
 
-    const getImages = async () => {
-        try {
-            setIsLoading(true);
-            const data: CatImage[] = await getKittyPhoto(pageRef.current);
+    const handleAddToLiked = useCallback((url: string) => dispatch(addToLiked(url)), [dispatch]);
+    const handleRemoveFromLiked = useCallback((url: string) => dispatch(removeFromLiked(url)), [dispatch]);
+    const handleRemoveFromImagesAndLiked = useCallback((url: string) => dispatch(removeFromImagesAndLiked(url)), [dispatch]);
 
-            setImages(data.map((catImage) => ({
-                id: parseInt(catImage.id),
-                url: catImage.url,
-                name: catImage.name,
-                origin: catImage.origin,
-            })));
-
-            pageRef.current++;
-        } catch (error) {
-            console.error("Error loading images:", error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
 
     useEffect(() => {
-        getImages();
-    }, []);
+        dispatch(fetchImages(pageRef.current) as any);
+    }, [dispatch]);
 
-    useEffect(() => {
-        const newFilteredImages = showLikedOnly ? images.filter((image) => likedImages.includes(image.url)) : images;
-        setFilteredImages(newFilteredImages);
-    }, [showLikedOnly, images, likedImages]);
 
     return (
         <div className={s.wrapper}>
             <div className={s.filterButtonContainer}>
-                <button className={s.filterButton} onClick={() => setFilterMode(!showLikedOnly)}>
+                <button className={s.filterButton} onClick={() => dispatch(setFilterMode(!showLikedOnly))}>
                     {showLikedOnly ? "Show All" : "Show Liked"}
                 </button>
             </div>
             <div className={s.container}>
-                {isLoading ? (
+                {loading ? (
                     <div className={s.loaderContainer}>
-                        <img src={loadingImage} alt="Loading" className={s.loaderImage} />
+                        <img src={loadingImage} alt="Loading" className={s.loaderImage}/>
                     </div>
-                ) : (filteredImages.map(({ id, url, name, origin }, index) => (
-                    <CardContainer
-                        key={`${id}-${index}`}
-                        imageUrl={url}
-                        addToLiked={() => addToLiked(url)}
-                        removeFromLiked={() => removeFromLiked(url)}
-                        removeFromImagesAndLiked={() => url}
-                        isLiked={likedImages.includes(url)}
-                        name={name}
-                        origin={origin}
-                    />
+                ) : (
+                    filteredImages.map((image: ImageType | undefined, index: number) => (
+                        image && (
+                            <Card
+                                key={`${image.id}-${index}`}
+                                imageUrl={image.url}
+                                addToLiked={() => handleAddToLiked(image.url)}
+                                removeFromLiked={() => handleRemoveFromLiked(image.url)}
+                                removeFromImagesAndLiked={() => handleRemoveFromImagesAndLiked(image.url)}
+                                isLiked={likedImages.includes(image.url)}
+                                name={image.name}
+                                origin={image.origin}
+                            />
+                        )
                     ))
                 )}
             </div>
@@ -89,4 +66,3 @@ const MainBoard: React.FC<MainBoardProps> = ({
 };
 
 export default MainBoard;
-

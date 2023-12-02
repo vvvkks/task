@@ -1,6 +1,11 @@
-import { createStore, Store } from 'redux';
-import appReducer, { AppState, AppAction } from './appReducer';
+import { configureStore } from '@reduxjs/toolkit';
+import imagesReducer from './imagesSlice';
 
-const store: Store<AppState, AppAction> = createStore(appReducer);
+export const store = configureStore({
+    reducer: {
+        images: imagesReducer,
+    },
+});
 
-export default store;
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;
